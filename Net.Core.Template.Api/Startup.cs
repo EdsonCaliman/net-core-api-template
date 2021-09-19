@@ -5,8 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Net.Core.Template.CrossCutting.Ioc;
+using Newtonsoft.Json;
 
-namespace Net.Core.Api
+namespace Net.Core.Template.Api
 {
     public class Startup
     {
@@ -27,12 +28,23 @@ namespace Net.Core.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddControllers();
+            services.AddControllers()
+                    .AddNewtonsoftJson(jsonOptions =>
+             {
+                 jsonOptions.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                 jsonOptions.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                 jsonOptions.UseCamelCasing(true);
+             });
             services.ConfigureContainer(_configuration);
+            services.AddApiVersioning(options => options.ReportApiVersions = true);
+            services.AddVersionedApiExplorer(options =>
+                     {
+                         options.GroupNameFormat = "'v'VVV";
+                         options.SubstituteApiVersionInUrl = true;
+                     });
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Net.Core.Api", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Net.Core.Template.Api", Version = "v1" });
             });
         }
 
@@ -43,14 +55,10 @@ namespace Net.Core.Api
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Net.Core.Api v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Net.Core.Template.Api v1"));
             }
 
-            app.UseHttpsRedirection();
-
             app.UseRouting();
-
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
